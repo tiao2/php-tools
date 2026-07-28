@@ -1,0 +1,20 @@
+{
+    "name": "phptools/php-tools",
+    "description": "Modular PHP website building toolkit with SSO, community, API gateway and unified exception handling",
+    "type": "library",
+    "require": {
+        "php": ">=7.4",
+        "vlucas/phpdotenv": "^5.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "PhpTools\\": "src/"
+        }
+    },
+    "license": "Apache-2.0",
+    "authors": [
+        {
+            "name": "Developer"
+        }
+    ]
+}
