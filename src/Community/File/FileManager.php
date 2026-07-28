@@ -6,14 +6,28 @@ namespace PhpTools\Community\File;
 
 use PhpTools\Community\CommunityBase;
 use PhpTools\SSO\SSO;
+use PhpTools\Community\Exception\ForbiddenException;
 
+/**
+ * FileManager handles file uploads, metadata retrieval, deletion, and listing.
+ * All operations require SSO authentication.
+ */
 class FileManager extends CommunityBase
 {
     private \PDO $pdo;
     private string $uploadDir;
     private int $maxFileSize;      // bytes
-    private array $allowedTypes;   // MIME
+    private array $allowedTypes;   // MIME types
 
+    /**
+     * Constructor.
+     *
+     * @param SSO $sso SSO instance for authentication
+     * @param \PDO $pdo Database connection
+     * @param string|null $uploadDir Directory for storing uploaded files (trailing slash auto-appended)
+     * @param int $maxFileSize Maximum file size in bytes
+     * @param array $allowedTypes List of allowed MIME types
+     */
     public function __construct(
         SSO $sso,
         \PDO $pdo,
@@ -23,14 +37,22 @@ class FileManager extends CommunityBase
     ) {
         parent::__construct($sso);
         $this->pdo = $pdo;
-        $this->uploadDir = $uploadDir ?? ($_ENV['FILE_UPLOAD_DIR'] ?? __DIR__ . '/../../public/uploads/');
+        $this->uploadDir = rtrim($uploadDir ?? ($_ENV['FILE_UPLOAD_DIR'] ?? __DIR__ . '/../../public/uploads/'), '/') . '/';
         $this->maxFileSize = (int)($_ENV['FILE_MAX_SIZE'] ?? $maxFileSize);
         $this->allowedTypes = $allowedTypes;
     }
 
     /**
      * Upload a file.
-     * Returns the database record of the uploaded file.
+     *
+     * The file extension is determined solely by its actual MIME type via a safe mapping,
+     * ignoring the original filename extension to prevent malicious execution.
+     *
+     * @param array $file The $_FILES entry for the uploaded file
+     * @param string $token SSO token
+     * @param string $authCode SSO auth code
+     * @return array The uploaded file record from database
+     * @throws \RuntimeException on upload failure or invalid file
      */
     public function upload(array $file, string $token, string $authCode): array
     {
@@ -54,7 +76,14 @@ class FileManager extends CommunityBase
             throw new \RuntimeException('Failed to create upload directory');
         }
 
-        $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+        // Map MIME type to a safe, harmless extension
+        $mimeToExt = [
+            'image/jpeg' => 'jpg',
+            'image/png'  => 'png',
+            'image/gif'  => 'gif',
+            'application/pdf' => 'pdf',
+        ];
+        $extension = $mimeToExt[$mime] ?? 'bin';
         $storedName = bin2hex(random_bytes(16)) . '.' . $extension;
         $destination = $this->uploadDir . $storedName;
 
@@ -80,7 +109,15 @@ class FileManager extends CommunityBase
     }
 
     /**
-     * Get file metadata by ID (owner or admin).
+     * Get file metadata by ID.
+     * Only the owner (or an admin, if extended) may access.
+     *
+     * @param int $fileId File ID
+     * @param string $token SSO token
+     * @param string $authCode SSO auth code
+     * @return array File record
+     * @throws \RuntimeException if file not found
+     * @throws ForbiddenException if access denied
      */
     public function getById(int $fileId, string $token, string $authCode): array
     {
@@ -92,14 +129,21 @@ class FileManager extends CommunityBase
             throw new \RuntimeException('File not found');
         }
         if ($file['user_id'] != $userId) {
-            // simple ownership check; extend with ACL if needed
-            throw new \PhpTools\Community\Exception\ForbiddenException('Access denied');
+            throw new ForbiddenException('Access denied');
         }
         return $file;
     }
 
     /**
-     * Delete a file (owner or admin).
+     * Delete a file by ID.
+     * Only the owner may delete (extend with admin roles if needed).
+     *
+     * @param int $fileId File ID
+     * @param string $token SSO token
+     * @param string $authCode SSO auth code
+     * @return bool True on success
+     * @throws \RuntimeException if file not found or deletion fails
+     * @throws ForbiddenException if access denied
      */
     public function delete(int $fileId, string $token, string $authCode): bool
     {
@@ -112,7 +156,13 @@ class FileManager extends CommunityBase
     }
 
     /**
-     * List files for the authenticated user.
+     * List files belonging to the authenticated user.
+     *
+     * @param string $token SSO token
+     * @param string $authCode SSO auth code
+     * @param int $page Page number (1-indexed)
+     * @param int $perPage Items per page
+     * @return array List of file records
      */
     public function listUserFiles(string $token, string $authCode, int $page = 1, int $perPage = 20): array
     {
