@@ -25,7 +25,7 @@ class SSO
     public static function fromEnv(AuthenticatorInterface $authenticator): self
     {
         $config = Config::fromEnv();
-        $storage = new MySqlStorage();
+        $storage = new \PhpTools\SSO\MySqlStorage();
         return new self($storage, $authenticator, $config);
     }
 

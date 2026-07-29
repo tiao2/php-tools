@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
+
 require __DIR__ . '/bootstrap.php';
+
 use PhpTools\API\Request;
 use PhpTools\API\Router;
 use PhpTools\API\Response;
@@ -14,13 +16,12 @@ use PhpTools\SSO\AuthenticatorInterface;
 use PhpTools\ModuleManager;
 
 $moduleManager = new ModuleManager($_ENV);
+
 $sso = null;
 if ($moduleManager->isEnabled('SSO')) {
-    // TODO: Replace this demo authenticator with your own implementation.
-    // For demo purposes, credentials are read from .env (TEST_USER, TEST_PASS).
     $authenticator = new class implements AuthenticatorInterface {
         public function authenticate(string $username, string $password): ?int {
-            if ($username === getenv("TEST_USER") && $password === getenv("TEST_PASS")) {
+            if ($username === 'admin' && $password === '123456') {
                 return 1;
             }
             return null;
@@ -36,10 +37,13 @@ if ($moduleManager->isEnabled('API')) {
         $driver = $_ENV['API_RATE_LIMIT_DRIVER'] ?? 'memory';
         $requests = (int)($_ENV['API_RATE_LIMIT_REQUESTS'] ?? 100);
         $window = (int)($_ENV['API_RATE_LIMIT_WINDOW'] ?? 60);
+
         if ($driver === 'redis') {
             $redis = new \Redis();
             $redis->connect($_ENV['REDIS_HOST'], (int)$_ENV['REDIS_PORT']);
-            if (!empty($_ENV['REDIS_PASSWORD'])) $redis->auth($_ENV['REDIS_PASSWORD']);
+            if (!empty($_ENV['REDIS_PASSWORD'])) {
+                $redis->auth($_ENV['REDIS_PASSWORD']);
+            }
             $limiter = new RedisRateLimiter($redis, $requests, $window);
         } else {
             $limiter = new MemoryRateLimiter($requests, $window);
@@ -60,10 +64,9 @@ if ($moduleManager->isEnabled('API')) {
         $router->addGlobalMiddleware(new VersionMiddleware($versionMap));
     }
 
-    // 登录路由（直接读取 php://input，不依赖 getJsonBody）
+    // 新增 /login 路由
     $router->addRoute('POST', '/login', function (Request $req) use ($sso) {
-        $raw = file_get_contents('php://input');
-        $data = json_decode($raw, true);
+        $data = $req->getJsonBody();
         if (!isset($data['username']) || !isset($data['password'])) {
             return Response::error('Missing username or password', 400);
         }
@@ -75,7 +78,6 @@ if ($moduleManager->isEnabled('API')) {
         }
     });
 
-    // 用户信息路由（需要鉴权）
     $router->get('/user', function (Request $req) {
         if ($req->userId) {
             return Response::json(['user_id' => $req->userId, 'version' => $req->getVersion()]);

@@ -3,7 +3,7 @@ declare(strict_types=1);
 namespace PhpTools\API\Middleware;
 use PhpTools\API\Request;
 use PhpTools\API\Response;
-use PhpTools\SSO\SSO;               
+use PhpTools\SSO\SSO;
 
 class AuthMiddleware implements MiddlewareInterface
 {
@@ -18,6 +18,9 @@ class AuthMiddleware implements MiddlewareInterface
 
     public function handle(Request $request, callable $next): Response
     {
+        // 跳过 /login 路由，无需鉴权
+        if (strpos($request->getUri(), "/login") === 0) { return $next($request); }
+
         if (!$this->required) return $next($request);
         $token = $request->getHeader('X-API-Token') ?? $request->getQuery('token');
         $authCode = $request->getHeader('X-API-AuthCode') ?? $request->getQuery('auth_code');

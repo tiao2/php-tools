@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 namespace PhpTools\API;
 
 class Request
@@ -68,12 +70,13 @@ class Request
     private function getAllHeaders(): array
     {
         if (function_exists('getallheaders')) {
-            return getallheaders();
-        }
-        $headers = [];
-        foreach ($_SERVER as $name => $value) {
-            if (strpos($name, 'HTTP_') === 0) {
-                $headers[str_replace('_', '-', strtolower(substr($name, 5)))] = $value;
+            $headers = getallheaders();
+        } else {
+            $headers = [];
+            foreach ($_SERVER as $name => $value) {
+                if (strpos($name, 'HTTP_') === 0) {
+                    $headers[str_replace('_', '-', strtolower(substr($name, 5)))] = $value;
+                }
             }
         }
         return $headers;

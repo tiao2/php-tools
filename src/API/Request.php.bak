@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 namespace PhpTools\API;
 
 class Request
@@ -53,12 +55,9 @@ class Request
 
     public function getJsonBody(): ?array
     {
-        $contentType = $this->getHeader('Content-Type');
-        if ($contentType !== null && strpos($contentType, 'application/json') === 0) {
+        if ($this->getHeader('Content-Type') === 'application/json') {
             $raw = file_get_contents('php://input');
-            if ($raw === false) return null;
-            $data = json_decode($raw, true);
-            return is_array($data) ? $data : null;
+            return json_decode($raw, true) ?: null;
         }
         return null;
     }
@@ -68,12 +67,13 @@ class Request
     private function getAllHeaders(): array
     {
         if (function_exists('getallheaders')) {
-            return getallheaders();
-        }
-        $headers = [];
-        foreach ($_SERVER as $name => $value) {
-            if (strpos($name, 'HTTP_') === 0) {
-                $headers[str_replace('_', '-', strtolower(substr($name, 5)))] = $value;
+            $headers = getallheaders();
+        } else {
+            $headers = [];
+            foreach ($_SERVER as $name => $value) {
+                if (strpos($name, 'HTTP_') === 0) {
+                    $headers[str_replace('_', '-', strtolower(substr($name, 5)))] = $value;
+                }
             }
         }
         return $headers;

@@ -8,17 +8,23 @@ use PhpTools\Community\Exception\ForbiddenException;
 class ExceptionHandler
 {
     private bool $debug;
-    private ?callable $logger = null;
-    private ?callable $customHandler = null;
+    /**
+     * @var callable|null
+     */
+    private $logger = null;
+    /**
+     * @var callable|null
+     */
+    private $customHandler = null;
 
-    public function __construct(bool $debug = false, ?callable $logger = null)
+    public function __construct(bool $debug = false, $logger = null)
     {
         $this->debug = $debug;
         $this->logger = $logger;
     }
 
-    public function setLogger(callable $logger): void { $this->logger = $logger; }
-    public function setCustomHandler(callable $handler): void { $this->customHandler = $handler; }
+    public function setLogger($logger): void { $this->logger = $logger; }
+    public function setCustomHandler($handler): void { $this->customHandler = $handler; }
 
     public function handle(\Throwable $e): void
     {
