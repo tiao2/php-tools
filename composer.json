@@ -1,5 +1,5 @@
 {
-    "name": "phptools/php-tools",
+    "name": "tiao2/php-tools",
     "description": "Modular PHP website building toolkit with SSO, community, API gateway and unified exception handling",
     "type": "library",
     "require": {
