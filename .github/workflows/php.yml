@@ -16,6 +16,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        persist-credentials: false   # 阻止 GITHUB_TOKEN 写入 git config，降低泄露风险
 
     - name: Validate composer.json and composer.lock
       run: composer validate --strict
