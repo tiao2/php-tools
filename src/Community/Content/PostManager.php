@@ -46,7 +46,7 @@ class PostManager extends CommunityBase
     public function list(int $page = 1, int $perPage = 20): array
     {
         $offset = ($page - 1) * $perPage;
-        $stmt = $this->pdo->prepare('SELECT p.id, p.title, p.content, p.status, p.created_at, u.username
+        $stmt = $this->pdo->prepare('SELECT p.id, p.title, p.content, p.status, p.created_at, u.username, p.user_id
             FROM posts p JOIN users u ON p.user_id = u.id
             ORDER BY p.created_at DESC LIMIT :limit OFFSET :offset');
         $stmt->bindValue(':limit', $perPage, \PDO::PARAM_INT);
