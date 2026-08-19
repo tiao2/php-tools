@@ -9,7 +9,7 @@ A modular PHP library for building websites with SSO authentication, community f
 - **Out of the box**: PSR-4 autoloading, centralized configuration, minimal dependencies.
 
 ## Requirements
-- PHP >= 7.4
+- PHP >= 8.1
 - Composer
 - MySQL 5.7+ (or MariaDB 10.2+)
 - Redis (optional, for distributed rate limiting and SSO storage)
@@ -17,8 +17,7 @@ A modular PHP library for building websites with SSO authentication, community f
 ## Quick Start
 ### 1. Create project and install dependencies
 ```bash
-composer create-project phptools/php-tools my-project
-cd my-project
+composer require tiao2/php-tools
 ```
 
 Or clone the repository manually and run:
