@@ -28,9 +28,9 @@ class AuthMiddleware implements MiddlewareInterface
 
         // 从 $_SERVER 直接读取头部，避免 Request::getHeader 大小写问题
         // FIXME: Workaround for Request::getHeader case-sensitivity, should be fixed upstream
-        $token = $_SERVER['HTTP_X_API_TOKEN'] ?? $_SERVER['HTTP_X_API_TOKEN'] ?? $request->getQuery('token');
-        $authCode = $_SERVER['HTTP_X_API_AUTHCODE'] ?? $_SERVER['HTTP_X_API_AUTHCODE'] ?? $request->getQuery('auth_code');
-
+        $token = $_SERVER['HTTP_X_API_TOKEN'] ?? $request->getQuery('token');
+        $authCode = $_SERVER['HTTP_X_API_AUTHCODE'] ?? $request->getQuery('auth_code');
+        
         if ($token === null || $authCode === null) {
             return Response::error('Authentication required', 401);
         }
