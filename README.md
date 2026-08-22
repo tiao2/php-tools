@@ -9,7 +9,7 @@ A modular PHP library for building websites with SSO authentication, community f
 - **Out of the box**: PSR-4 autoloading, centralized configuration, minimal dependencies.
 
 ## Requirements
-- PHP >= 8.1
+- PHP >= 8.0
 - Composer
 - MySQL 5.7+ (or MariaDB 10.2+)
 - Redis (optional, for distributed rate limiting and SSO storage)
